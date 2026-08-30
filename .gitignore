@@ -1,0 +1,10 @@
+node_modules/
+data/
+photos/
+.env
+*.log
+*.jpg
+*.jpeg
+*.png
+*.xls
+*.xlsx

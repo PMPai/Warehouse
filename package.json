@@ -1,0 +1,19 @@
+{
+  "name": "warehouse",
+  "version": "0.1.0",
+  "description": "設備管理系統 — 設備與數量類物料的進出倉登記中台",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "migrate": "node scripts/migrate.mjs",
+    "init-db": "node scripts/init-db.js",
+    "seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5"
+  }
+}
