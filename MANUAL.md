@@ -79,22 +79,28 @@ curl -u "$(cat ~/.config/warehouse/credentials)" http://168.144.98.68:8081/api/i
 
 ### 安裝 Agent Skill（外部用戶）
 
-兩個 skill（`warehouse-query` 查詢、`warehouse-entry` 輸入）可安裝在任何支援 **Agent Skills** 格式的 AI agent（opencode、Claude 相容平台等），安裝後從用戶自己電腦遠端呼叫中台。
+兩個 skill（`warehouse-query` 查詢、`warehouse-entry` 輸入）可安裝在任何支援 **Agent Skills** 格式的 AI agent（opencode、Claude 相容平台等）。**只需兩步，直接對你自己的 agent 說：**
 
-#### 步驟 1：下載 skill
+#### 步驟 1：寫入憑證
 
+跟你本機的 agent 說：
+
+> 請在我電腦建立 `~/.config/warehouse/credentials`，內容為單行 `admin:Jines2355`，並設權限 600。
+
+agent 會執行：
 ```bash
-mkdir -p ~/.config/opencode/skills
-git clone --depth 1 --filter=blob:none --sparse https://github.com/PMPai/Warehouse.git /tmp/wh
-git -C /tmp/wh sparse-checkout set .opencode/skills
-cp -r /tmp/wh/.opencode/skills/warehouse-query ~/.config/opencode/skills/
-cp -r /tmp/wh/.opencode/skills/warehouse-entry ~/.config/opencode/skills/
-rm -rf /tmp/wh
+mkdir -p ~/.config/warehouse
+printf 'admin:Jines2355' > ~/.config/warehouse/credentials
+chmod 600 ~/.config/warehouse/credentials
 ```
 
-> 只下載 `.opencode/skills` 目錄，不需整個專案。
+#### 步驟 2：安裝 skill
 
-其他平台放對應目錄（目錄結構相同：`<skill 名>/SKILL.md`）：
+跟你本機的 agent 說：
+
+> 請從 `https://github.com/PMPai/Warehouse` 只安裝 `.opencode/skills` 下的兩個 skill（`warehouse-query`、`warehouse-entry`）到你的 skills 目錄，不要整個專案。
+
+agent 會把兩個 skill 裝到對應目錄：
 
 | 平台 | 全域安裝路徑 |
 |---|---|
@@ -102,38 +108,12 @@ rm -rf /tmp/wh
 | Claude 相容 | `~/.claude/skills/` |
 | 通用 Agent Skills | `~/.agents/skills/` |
 
-專案內安裝則放 `.opencode/skills/`、`.claude/skills/` 或 `.agents/skills/`（僅該專案可用）。
+完成。之後：
 
-#### 步驟 2：設定憑證（只做一次）
-
-1. 向管理者索取中台帳密（管理者應以**線下方式**提供：訊息、口頭；避免群組/郵件廣播）
-2. 在自己電腦執行：
-
-```bash
-mkdir -p ~/.config/warehouse
-printf 'admin:你的密碼' > ~/.config/warehouse/credentials   # 單行，格式 user:password
-chmod 600 ~/.config/warehouse/credentials                   # 僅本人可讀
-```
-
-> ⚠ 帳密**只存在這個檔案**。不要貼進對話、不要寫進任何專案檔、不要 commit。
-
-#### 步驟 3：驗證連線
-
-```bash
-curl -u "$(cat ~/.config/warehouse/credentials)" http://168.144.98.68:8081/api/dashboard
-```
-
-| 結果 | 意義 |
-|---|---|
-| 回傳 JSON（`{"query":...}`） | 成功，可開始使用 |
-| `401` | 帳密錯誤，檢查 `credentials` 檔內容格式 |
-| 連線失敗/逾時 | 網路不通或伺服器防火牆未開 8081，聯絡管理者 |
-
-#### 步驟 4：使用
-
-- **輸入**：把進出倉單據照片交給 agent，說「用輸入流程處理」→ agent 載入 `warehouse-entry`，OCR 判讀、推斷類型、列草稿給你確認，確認後自動寫入中台
-- **查詢**：直接口語提問（如「26-023 還有哪些設備沒回」「二重管庫存多少」）→ agent 載入 `warehouse-query`，呼叫查詢 API 整理回答
-- 中台位址預設 `http://168.144.98.68:8081`；若中台搬位址，用環境變數 `WAREHOUSE_API` 覆蓋，或直接告訴 agent 新位址
+- **輸入**：把進出倉單據照片交給 agent，說「用輸入流程處理」
+- **查詢**：直接口語提問（如「26-023 還有哪些設備沒回」「二重管庫存多少」）
+- 中台位址預設 `http://168.144.98.68:8081`；搬位址時用環境變數 `WAREHOUSE_API` 覆蓋，或直接告訴 agent 新位址
+- 若 agent 回報 `401`：重做步驟 1；連線失敗：檢查網路或聯絡管理者開防火牆
 
 ### 重置資料庫（測試用）
 

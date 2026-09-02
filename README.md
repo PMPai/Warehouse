@@ -398,29 +398,14 @@ audit_log(id PK, user_id FK, tbl, row_id, changed_at, old_json, new_json)
 
 > 兩個 skill 提示詞刻意不同：輸入 skill 強調「謹慎確認後才寫」，查詢 skill 強調「唯讀整理不虛構」，避免職責混淆。
 
-### 10.3 外部用戶安裝 skill
+### 10.3 外部用戶安裝 skill（兩步）
 
-skill 安裝於用戶自己電腦的 agent（opencode／Claude 相容／`.agents`），遠端呼叫中台。步驟：
+用戶只需對自己本機的 agent 說兩句話：
 
-1. **下載**（只取 skills 目錄）：
-   ```bash
-   mkdir -p ~/.config/opencode/skills
-   git clone --depth 1 --filter=blob:none --sparse https://github.com/PMPai/Warehouse.git /tmp/wh
-   git -C /tmp/wh sparse-checkout set .opencode/skills
-   cp -r /tmp/wh/.opencode/skills/warehouse-query /tmp/wh/.opencode/skills/warehouse-entry ~/.config/opencode/skills/
-   rm -rf /tmp/wh
-   ```
-   其他平台對應路徑：`~/.claude/skills/`、`~/.agents/skills/`（專案內：`.opencode/skills/` 等）。
-2. **設定憑證（一次性）**：向管理者線下索取帳密後
-   ```bash
-   mkdir -p ~/.config/warehouse
-   printf 'admin:你的密碼' > ~/.config/warehouse/credentials   # 單行 user:password
-   chmod 600 ~/.config/warehouse/credentials
-   ```
-   skill 呼叫時以 `curl -u "$(cat ~/.config/warehouse/credentials)"` 附 Basic Auth；帳密絕不寫入 skill 檔或 repo。
-3. **驗證**：`curl -u "$(cat ~/.config/warehouse/credentials)" http://168.144.98.68:8081/api/dashboard` 回 JSON 即成功。
+1. **寫憑證**：「請在我電腦建立 `~/.config/warehouse/credentials`，內容單行 `admin:Jines2355`，權限 600。」
+2. **裝 skill**：「請從 `https://github.com/PMPai/Warehouse` 只安裝 `.opencode/skills` 下的 `warehouse-query`、`warehouse-entry` 到你的 skills 目錄。」
 
-詳見 `MANUAL.md` 0 章「安裝 Agent Skill（外部用戶）」。中台位址可用環境變數 `WAREHOUSE_API` 覆蓋。
+agent 會自行執行對應指令。安裝路徑：`~/.config/opencode/skills/`（opencode）、`~/.claude/skills/`、`~/.agents/skills/`。skill 呼叫時以 `curl -u "$(cat ~/.config/warehouse/credentials)"` 附 Basic Auth。詳見 `MANUAL.md` 0 章。中台位址可用環境變數 `WAREHOUSE_API` 覆蓋。
 
 ---
 
