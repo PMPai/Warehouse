@@ -581,8 +581,7 @@ D:\Works\VScode\Warehouse\
 ├── scripts/
 │   ├── init-db.js               # 重建 schema（測試用）
 │   ├── seed.js                  # 測試資料播種
-│   ├── migrate.mjs              # 從舊 .xls 匯入真實資料（用 xlsx 库）
-│   └── build-pdf.sh             # 從 MANUAL.md 重建 MANUAL.pdf（pandoc+typst）
+│   └── migrate.mjs              # 從舊 .xls 匯入真實資料（用 xlsx 库）
 ├── public/
 │   ├── index.html               # 前端骨架（8 頁導覽）
 │   ├── login.html               # 登入頁
@@ -595,8 +594,7 @@ D:\Works\VScode\Warehouse\
 ├── photos/                      # 進出單照片（gitignore）
 ├── docs/superpowers/specs/
 │   └── 2026-08-29-warehouse-system-design.md   # 詳細設計規格
-├── MANUAL.md                    # 使用手冊（源檔）
-└── MANUAL.pdf                   # 使用手冊（由 scripts/build-pdf.sh 產生）
+└── MANUAL.md                    # 使用手冊
 ```
 
 ### 17.4 啟動方式
