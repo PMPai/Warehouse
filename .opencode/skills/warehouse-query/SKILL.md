@@ -14,9 +14,30 @@ description: 設備管理系統的查詢 skill。以自然語言建立查找條�
 
 ## 中台連線
 
-- 預設 base URL：`http://127.0.0.1:8088`（可被環境變數 `WAREHOUSE_API` 覆蓋；若使用者提供其他 IP:port，以使用者提供為準）
-- 所有 API 皆為 JSON；無需認證
+- 預設 base URL：`http://168.144.98.68:8081`（可被環境變數 `WAREHOUSE_API` 覆蓋；若使用者提供其他 IP:port，以使用者提供為準）
+- 所有 API 皆為 JSON；**除 `/api/health` 外皆需認證**（見下方「認證」章節）
 - 一律使用 GET；**絕不呼叫 POST/PATCH/DELETE**
+
+## 認證（首次使用必讀）
+
+中台所有 API 皆需認證（僅 `GET /api/health` 例外）。帳密**不存在本檔**，由管理者線下提供（訊息/口頭），存放在使用者自己電腦上。
+
+### 首次設定（只做一次）
+1. 向使用者索取中台帳密
+2. 寫入 `~/.config/warehouse/credentials`，內容為單行 `user:password`
+3. 執行 `chmod 600 ~/.config/warehouse/credentials`
+4. 若檔案不存在，先引導使用者完成設定，**絕不猜測或硬編碼帳密**
+
+### 每次呼叫
+所有呼叫一律附 Basic Auth：
+```
+curl -u "$(cat ~/.config/warehouse/credentials)" "{base}/api/items?q=鑽機"
+```
+收到 `401` → 請使用者檢查憑證檔內容與權限，不要自行猜測帳密。
+
+### 禁止
+- 絕不把帳密寫進對話、草稿、程式碼或任何檔案（憑證檔除外）
+- 絕不在輸出中印出密碼
 
 ## 查詢 API 對照表
 
@@ -27,7 +48,7 @@ description: 設備管理系統的查詢 skill。以自然語言建立查找條�
 | 找進出單 | `GET /api/slips` | `from` `to` `case` `type` `borrower` `item` `unit` |
 | 看異動紀錄 | `GET /api/movements` | `from` `to` `case` `type` `unit` `item` |
 | 看耗材庫存/低庫存 | `GET /api/stock` | `item` `low=1` |
-| 報表（分組聚合） | `GET /api/reports/movements` | `from` `to` `case` `type` `group=case|item|type` |
+| 報表（分組聚合） | `GET /api/movements/movements` | `from` `to` `case` `type` `group=case|item|type` |
 | 整體概況 | `GET /api/dashboard` | （無參數） |
 | 品名/別名查 item_id | `GET /api/items` | `q=` `kind=` |
 

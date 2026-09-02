@@ -8,6 +8,10 @@ let state = {};
 // ── utils ──
 async function api(path, opts) {
   const r = await fetch('/api/' + path, opts);
+  if (r.status === 401) {
+    window.location.href = '/login.html';
+    throw new Error('unauthorized');
+  }
   if (!r.ok) {
     const e = await r.json().catch(() => ({ error: r.statusText }));
     throw new Error(e.error || 'API error');
@@ -15,6 +19,10 @@ async function api(path, opts) {
   const ct = r.headers.get('content-type') || '';
   if (ct.includes('json')) return r.json();
   return r;
+}
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' }).catch(() => {});
+  window.location.href = '/login.html';
 }
 function toast(msg, type='success') {
   const el = document.createElement('div');
@@ -64,6 +72,8 @@ $nav.addEventListener('click', e => {
   $nav.querySelectorAll('a').forEach(x => x.classList.toggle('active', x === a));
   render();
 });
+
+document.getElementById('logout-btn')?.addEventListener('click', logout);
 
 async function render() {
   $main.innerHTML = '<p class="muted">載入中...</p>';

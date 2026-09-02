@@ -1,5 +1,6 @@
 import express from 'express';
 import { getDb } from './db.js';
+import { requireAuth, checkCredentials, createSession, destroySession, getToken, COOKIE_NAME } from './auth.js';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
@@ -16,6 +17,27 @@ const PORT = Number(process.env.WAREHOUSE_PORT) || 8088;
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 認證：保護所有路由（login/health/static login 資產除外，見 src/auth.js）
+app.use(requireAuth);
+
+// 登入：帳密正確則發 session cookie
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!checkCredentials(username || '', password || '')) {
+    return res.status(401).json({ error: '帳號或密碼錯誤' });
+  }
+  const token = createSession();
+  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax`);
+  res.json({ ok: true });
+});
+
+// 登出：清除 session
+app.post('/api/logout', (req, res) => {
+  destroySession(getToken(req));
+  res.setHeader('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+  res.json({ ok: true });
+});
 
 // 靜態前端
 const publicDir = join(root, 'public');

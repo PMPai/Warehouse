@@ -14,9 +14,31 @@ description: 設備管理系統的輸入 skill。讀進出倉單據照片，OCR 
 
 ## 中台連線
 
-- 預設 base URL：`http://127.0.0.1:8088`（可被環境變數 `WAREHOUSE_API` 覆蓋；若使用者提供其他 IP:port，以使用者提供為準）
-- 所有 API 皆為 JSON；無需認證
+- 預設 base URL：`http://168.144.98.68:8081`（可被環境變數 `WAREHOUSE_API` 覆蓋；若使用者提供其他 IP:port，以使用者提供為準）
+- 所有 API 皆為 JSON；**除 `/api/health` 外皆需認證**（見下方「認證」章節）
 - 寫入前一律先 `GET /api/items?q=` 做品名/別名匹配，**不可憑照片文字直接猜 item_id**
+
+## 認證（首次使用必讀）
+
+中台所有 API 皆需認證（僅 `GET /api/health` 例外）。帳密**不存在本檔**，由管理者線下提供（訊息/口頭），存放在使用者自己電腦上。
+
+### 首次設定（只做一次）
+1. 向使用者索取中台帳密
+2. 寫入 `~/.config/warehouse/credentials`，內容為單行 `user:password`
+3. 執行 `chmod 600 ~/.config/warehouse/credentials`
+4. 若檔案不存在，先引導使用者完成設定，**絕不猜測或硬編碼帳密**
+
+### 每次呼叫
+所有呼叫（含寫入）一律附 Basic Auth：
+```
+curl -u "$(cat ~/.config/warehouse/credentials)" "{base}/api/items?q=鑽機"
+curl -u "$(cat ~/.config/warehouse/credentials)" -X POST -H 'Content-Type: application/json' -d @slip.json "{base}/api/slips"
+```
+收到 `401` → 請使用者檢查憑證檔內容與權限，不要自行猜測帳密。
+
+### 禁止
+- 絕不把帳密寫進對話、草稿、程式碼或任何檔案（憑證檔除外）
+- 絕不在輸出中印出密碼
 
 ## 工作流程（務必照順序）
 

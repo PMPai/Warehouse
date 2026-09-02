@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登入 — 設備管理系統</title>
+<link rel="stylesheet" href="/app.css">
+<style>
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--c-bg)}
+.login-box{width:340px;background:#fff;border-radius:var(--r-lg);box-shadow:var(--sh-sm);padding:32px}
+.login-box h1{font-size:18px;font-weight:700;margin-bottom:4px}
+.login-box .sub{font-size:12px;color:var(--c-text-faint);letter-spacing:.5px;margin-bottom:24px}
+.login-box label{display:block;font-size:13px;color:var(--c-text-muted);margin:12px 0 4px}
+.login-box input{width:100%;padding:9px 12px;border:1px solid var(--c-border);border-radius:var(--r);font-size:14px;font-family:inherit;box-sizing:border-box}
+.login-box input:focus{outline:none;border-color:var(--c-primary)}
+.login-box .btn{width:100%;justify-content:center;margin-top:20px}
+.login-err{color:#c0392b;font-size:13px;margin-top:12px;min-height:18px}
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login-box" id="login-form">
+    <h1>設備管理系統</h1>
+    <div class="sub">warehouse</div>
+    <label for="username">帳號</label>
+    <input id="username" name="username" autocomplete="username" required>
+    <label for="password">密碼</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn btn-primary" type="submit">登入</button>
+    <div class="login-err" id="login-err"></div>
+  </form>
+</div>
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    if (r.ok) { window.location.href = '/'; return; }
+    const data = await r.json().catch(() => ({}));
+    err.textContent = data.error || '登入失敗';
+  } catch {
+    err.textContent = '網路錯誤，請重試';
+  }
+});
+</script>
+</body>
+</html>

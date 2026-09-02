@@ -9,6 +9,7 @@
 ## 目錄
 
 0. [系統安裝與啟動](#0-系統安裝與啟動)
+   - [登入系統](#登入系統)
 1. [系統主要功能](#1-系統主要功能)
 2. [使用方式](#2-使用方式)
    - 2.1 [儀表板的使用](#21-儀表板的使用)
@@ -46,6 +47,34 @@ node scripts/migrate.mjs
 ```
 
 Windows：雙擊 `start.bat`（獨立視窗常駐；關閉視窗即停止服務）。
+
+### 登入系統
+
+開啟系統網址（正式部署：`http://168.144.98.68:8081`，亦可 `http://ai.jines.com:8081`）後，第一個看到的是**登入頁**。
+
+- **帳號**：`admin`（系統唯一帳號；登入後可看、可改所有記錄，無權限分級）
+- **密碼**：目前為 `Jines2355`，硬編碼於 `src/auth.js`（`ADMIN_USER`/`ADMIN_PASS`）；改密碼＝改該檔並重啟服務
+- 登入成功後瀏覽器取得 session cookie（HttpOnly），在登出或服務重啟前不用重登
+- 頁面右上角「登出」按鈕可随时登出
+- `/api/health` 為唯一免認證端點（供監控用）
+
+#### Agent／API 呼叫認證（Basic Auth）
+
+AI Agent（skill）與腳本呼叫 API 不走登入頁，每個 request 附 Basic Auth：
+
+```bash
+curl -u "admin:Jines2355" http://168.144.98.68:8081/api/dashboard
+```
+
+skill 規範：帳密放在**使用者自己電腦**的 `~/.config/warehouse/credentials`（單行 `user:password`，`chmod 600`），由管理者線下提供；**絕不寫進 skill 檔、對話或 repo**：
+
+```bash
+curl -u "$(cat ~/.config/warehouse/credentials)" http://168.144.98.68:8081/api/items?q=鑽機
+```
+
+收到 `401` 表示憑證錯誤或憑證檔未設定。
+
+> ⚠ 目前為 HTTP 明文傳輸。系統上公網前應加 TLS（如 nginx 反代 + Let's Encrypt），否則帳密可被攔截。
 
 ### 重置資料庫（測試用）
 

@@ -71,7 +71,7 @@
 - **完整流動軌跡**：一次寫入同時更新主檔狀態＋異動紀錄＋庫存，不再手動複製
 - **儀表板與報表**：隨時觀察庫存變化、產生報表
 - **自然語言查詢**：經手人/現場用自然語言查找資料
-- **單一使用者**：API 不做權限限制，不區分角色
+- **單一使用者**：登入後 API 不做權限限制，不區分角色（見 8.0 認證）
 - **UNIX 伺服器部署**：中台部署於 UNIX 伺服器，綁定 host:port（開發 `127.0.0.1:8088`）
 
 ---
@@ -103,7 +103,7 @@
 | 輸入 Agent（Part 1） | 照片 OCR → 草稿 → 確認後 API 寫入 |
 | 查詢 Agent（Part 3） | 自然語言 → 查詢 API → 結果整理 |
 
-> 單一使用者，無角色區分，無登入密碼。API 不做權限限制。`audit_log` 保留供事後追溯修改。
+> 單一使用者（`admin`），需登入（見 8.0 認證），無角色區分；登入後 API 不做權限限制。`audit_log` 保留供事後追溯修改。
 
 ---
 
@@ -278,6 +278,19 @@ audit_log(id PK, user_id FK, tbl, row_id, changed_at, old_json, new_json)
 ---
 
 ## 8. API 規格
+
+### 8.0 認證（Authentication）
+
+除 `GET /api/health` 外，**所有路由（含靜態頁面、`/photos`）皆需認證**。
+
+- **單一使用者**：`admin`，密碼硬編碼於 `src/auth.js`（`ADMIN_USER`/`ADMIN_PASS`，現為 `Jines2355`）。登入後無權限分級，所有記錄可看可改。
+- **瀏覽器**：`/login.html` 登入頁 → `POST /api/login`（JSON `{username, password}`）→ 發 `HttpOnly` session cookie（記憶體儲存，服務重啟即失效）；`POST /api/logout` 登出。未登入訪問任何頁面會 302 至登入頁；API 回 `401`。
+- **Agent／腳本（Basic Auth）**：每個 request 附 `Authorization: Basic base64(user:password)`：
+  ```bash
+  curl -u "$(cat ~/.config/warehouse/credentials)" http://168.144.98.68:8081/api/dashboard
+  ```
+  skill 規範：憑證存於使用者本機 `~/.config/warehouse/credentials`（單行 `user:password`，`chmod 600`，管理者線下提供），**不得寫入 skill 檔或 repo**。
+- **注意**：目前 HTTP 明文，上公網前須加 TLS。
 
 ### 8.1 寫入 API（Part 1 輸入 Agent 與網頁共用）
 
@@ -578,10 +591,12 @@ D:\Works\VScode\Warehouse\
 ```bash
 cp .env.example .env      # 編輯 host/port
 ./start.sh                # 或 npm start
-# 開啟 http://127.0.0.1:8088
+# 開啟 .env 中的網址（開發預設 http://127.0.0.1:8088）
 ```
 
 Windows：雙擊 `start.bat`（獨立視窗常駐；關閉視窗即停止服務）。
+
+**正式部署（168.144.98.68）**：`.env` 設 `WAREHOUSE_HOST=0.0.0.0`、`WAREHOUSE_PORT=8081`；以 systemd user service 常駐（`~/.config/systemd/user/warehouse.service`，`systemctl --user enable --now warehouse`）。網址：`http://168.144.98.68:8081`（或 `http://ai.jines.com:8081`）。首次開啟需登入（`admin`，見 8.0 認證）。
 
 重置 DB（測試用）：`node scripts/init-db.js`
 遷移真實資料：`node scripts/migrate.mjs`
