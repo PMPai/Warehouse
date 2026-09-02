@@ -398,6 +398,30 @@ audit_log(id PK, user_id FK, tbl, row_id, changed_at, old_json, new_json)
 
 > 兩個 skill 提示詞刻意不同：輸入 skill 強調「謹慎確認後才寫」，查詢 skill 強調「唯讀整理不虛構」，避免職責混淆。
 
+### 10.3 外部用戶安裝 skill
+
+skill 安裝於用戶自己電腦的 agent（opencode／Claude 相容／`.agents`），遠端呼叫中台。步驟：
+
+1. **下載**（只取 skills 目錄）：
+   ```bash
+   mkdir -p ~/.config/opencode/skills
+   git clone --depth 1 --filter=blob:none --sparse https://github.com/PMPai/Warehouse.git /tmp/wh
+   git -C /tmp/wh sparse-checkout set .opencode/skills
+   cp -r /tmp/wh/.opencode/skills/warehouse-query /tmp/wh/.opencode/skills/warehouse-entry ~/.config/opencode/skills/
+   rm -rf /tmp/wh
+   ```
+   其他平台對應路徑：`~/.claude/skills/`、`~/.agents/skills/`（專案內：`.opencode/skills/` 等）。
+2. **設定憑證（一次性）**：向管理者線下索取帳密後
+   ```bash
+   mkdir -p ~/.config/warehouse
+   printf 'admin:你的密碼' > ~/.config/warehouse/credentials   # 單行 user:password
+   chmod 600 ~/.config/warehouse/credentials
+   ```
+   skill 呼叫時以 `curl -u "$(cat ~/.config/warehouse/credentials)"` 附 Basic Auth；帳密絕不寫入 skill 檔或 repo。
+3. **驗證**：`curl -u "$(cat ~/.config/warehouse/credentials)" http://168.144.98.68:8081/api/dashboard` 回 JSON 即成功。
+
+詳見 `MANUAL.md` 0 章「安裝 Agent Skill（外部用戶）」。中台位址可用環境變數 `WAREHOUSE_API` 覆蓋。
+
 ---
 
 ## 11. 關鍵規則
@@ -550,10 +574,11 @@ D:\Works\VScode\Warehouse\
 ├── PLAN.md                      # 實施計劃（步驟＋進度追蹤）
 ├── package.json                 # Node 專案（express/better-sqlite3/multer）
 ├── .env.example / .env          # 設定（WAREHOUSE_HOST/PORT/DB/PHOTOS_DIR）
-├── start.sh                     # 啟動腳本（UNIX，綁定 127.0.0.1:8088）
+├── start.sh                     # 啟動腳本（UNIX，host/port 由 .env 控制）
 ├── start.bat                    # 啟動腳本（Windows，雙擊獨立視窗常駐）
 ├── src/
-│   ├── server.js                # Express server，載入路由
+│   ├── server.js                # Express server，載入路由＋認證
+│   ├── auth.js                  # 登入認證（admin 單一帳號、session、Basic Auth、requireAuth）
 │   ├── db.js                    # SQLite 連線＋ schema 載入
 │   ├── loadEnv.js               # .env 讀取（免 dotenv 依賴）
 │   ├── schema.sql               # 11 張資料表 DDL
@@ -571,9 +596,11 @@ D:\Works\VScode\Warehouse\
 ├── scripts/
 │   ├── init-db.js               # 重建 schema（測試用）
 │   ├── seed.js                  # 測試資料播種
-│   └── migrate.mjs              # 從舊 .xls 匯入真實資料（用 xlsx 库）
+│   ├── migrate.mjs              # 從舊 .xls 匯入真實資料（用 xlsx 库）
+│   └── build-pdf.sh             # 從 MANUAL.md 重建 MANUAL.pdf（pandoc+typst）
 ├── public/
 │   ├── index.html               # 前端骨架（8 頁導覽）
+│   ├── login.html               # 登入頁
 │   ├── app.css                  # design.md 配色實作
 │   └── app.js                   # 完整 SPA（儀表板/開單/列表/設置/報表/編輯刪除）
 ├── .opencode/skills/
@@ -583,7 +610,8 @@ D:\Works\VScode\Warehouse\
 ├── photos/                      # 進出單照片（gitignore）
 ├── docs/superpowers/specs/
 │   └── 2026-08-29-warehouse-system-design.md   # 詳細設計規格
-└── MANUAL.md                    # 使用手冊
+├── MANUAL.md                    # 使用手冊（源檔）
+└── MANUAL.pdf                   # 使用手冊（由 scripts/build-pdf.sh 產生）
 ```
 
 ### 17.4 啟動方式
